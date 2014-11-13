@@ -1,5 +1,4 @@
-
-Py3MQI - Python interface to WebSphere MQ (MQSeries)
+PyMQI - Python interface to WebSphere MQ (MQSeries)
 -------------------------------------------------------
 
 PyMQI allows one to connect to queue managers to issue MQAI and PCF requests.
@@ -30,16 +29,19 @@ on a queue and disconnects.
 
 More usage examples can be found here https://pythonhosted.org/pymqi/examples.html
 
+
+About this port
+=====================
+There are some tests fail to pass, while some tests may not be applicable to 
+python3, there might be bugs caused by this porting. I'll look into those latter.
+Patches for welcome.
+
+
 Supported MQ versions
 =====================
 
 According to PyMQI, any MQ version between 5.0 and 7.5 should work.
-Py3mqi will only work will Python 3.x.
-
-Download
-========
-
-Downloads are hosted on PyPI https://pypi.python.org/pypi/pymqi
+Note this port will only work will Python 3.x.
 
 More information
 ================
