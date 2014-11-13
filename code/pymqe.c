@@ -301,7 +301,7 @@ static PyObject *pymqe_MQOPEN(PyObject *self, PyObject *args) {
 
   long lOptions, lQmgrHandle;
 
-  if (!PyArg_ParseTuple(args, "ls#l", &lQmgrHandle, &qDescBuffer,
+  if (!PyArg_ParseTuple(args, "ly#l", &lQmgrHandle, &qDescBuffer,
             &qDescBufferLength, &lOptions)) {
     return NULL;
   }
@@ -314,7 +314,7 @@ static PyObject *pymqe_MQOPEN(PyObject *self, PyObject *args) {
   Py_BEGIN_ALLOW_THREADS
     MQOPEN((MQHCONN)lQmgrHandle, qDescP, (MQLONG) lOptions, &qHandle, &compCode, &compReason);
   Py_END_ALLOW_THREADS
-  return Py_BuildValue("(ls#ll)", (long) qHandle, qDescP,
+  return Py_BuildValue("(ly#ll)", (long) qHandle, qDescP,
                        PYMQI_MQOD_SIZEOF, (long) compCode, (long) compReason);
 }
 
@@ -413,7 +413,7 @@ static PyObject *mqputN(int put1Flag, PyObject *self, PyObject *args) {
        &compCode, &compReason);
     Py_END_ALLOW_THREADS
   }
-  return Py_BuildValue("(s#s#ll)", mDescP, PYMQI_MQMD_SIZEOF,
+  return Py_BuildValue("(y#y#ll)", mDescP, PYMQI_MQMD_SIZEOF,
                pmoP, PYMQI_MQPMO_SIZEOF, (long) compCode, (long) compReason);
 }
 
@@ -539,7 +539,7 @@ static PyObject *pymqe_MQGET(PyObject *self, PyObject *args) {
     returnLength = actualLength;
   }
 
-  rv = Py_BuildValue("(s#s#s#lll)", msgBuffer, (int) returnLength,
+  rv = Py_BuildValue("(y#y#y#lll)", msgBuffer, (int) returnLength,
              mDescP, PYMQI_MQMD_SIZEOF, gmoP, PYMQI_MQGMO_SIZEOF,
              (long) actualLength, (long) compCode, (long) compReason);
   free(msgBuffer);
@@ -667,7 +667,7 @@ static PyObject *pymqe_MQINQ(PyObject *self, PyObject *args) {
   if (intAttrCount) {
     retVal = Py_BuildValue("(lll)", (long) intAttrs[0], (long) compCode, (long) compReason);
   } else {
-    retVal = Py_BuildValue("(sll)", charAttrs, (long) compCode, (long) compReason);
+    retVal = Py_BuildValue("(yll)", charAttrs, (long) compCode, (long) compReason);
   }
   return retVal;
 }
@@ -706,11 +706,11 @@ static PyObject *pymqe_MQSET(PyObject *self, PyObject *args) {
     intAttrs[0] = PyLong_AsLong(attrArg);
     intAttrCount = 1;
   } else {
-    if (!PyString_Check(attrArg)) {
+    if (!PyBytes_Check(attrArg)) {
       PyErr_SetString(ErrorObj, "Arg is not a string");
       return NULL;
     }
-    strncpy(charAttrs, PyString_AsString(attrArg), MAX_CHARATTR_LENGTH);
+    strncpy(charAttrs, PyBytes_AsString(attrArg), MAX_CHARATTR_LENGTH);
     charAttrCount = (MQLONG)strlen(charAttrs);
   }
 
@@ -759,7 +759,7 @@ static PyObject * pymqe_MQSUB(PyObject *self, PyObject *args) {
     &compCode, &compReason);
   Py_END_ALLOW_THREADS
 
-  rv = Py_BuildValue("(s#llll)", subDescP, PYMQI_MQSD_SIZEOF, objectHandle, subHandle,
+  rv = Py_BuildValue("(y#llll)", subDescP, PYMQI_MQSD_SIZEOF, objectHandle, subHandle,
              (long) compCode, (long) compReason);
   return rv;
 
@@ -917,7 +917,7 @@ static PyObject* pymqe_MQINQMP(PyObject *self, PyObject *args) {
   MQINQMP(conn_handle, msg_handle, &impo, &name, &pd, &property_type, sizeof(value),
     value, &actual_value_length, &comp_code, &comp_reason);
 
-  rv = Py_BuildValue("(lls)", (long)comp_code, (long)comp_reason, (char *)value);
+  rv = Py_BuildValue("(lly)", (long)comp_code, (long)comp_reason, (char *)value);
   free(value);
   
   return rv;
@@ -1061,7 +1061,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
               return NULL;
             }
               
-            filter_type = PyString_AsString(_pymqi_filter_type); 
+            filter_type = PyBytes_AsString(_pymqi_filter_type); 
 
             /* String filter */
             if(0 == strcmp(filter_type, "string")) {
@@ -1069,7 +1069,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
               mqAddStringFilter(adminBag, 
                                   (MQLONG)PyLong_AsLong(filter_selector), 
                                   (MQLONG)PyObject_Length(filter_value),
-                                  (PMQCHAR)PyString_AsString(filter_value), 
+                                  (PMQCHAR)PyBytes_AsString(filter_value), 
                                   (MQLONG)PyLong_AsLong(filter_operator),
                                   &compCode, 
                                   &compReason); 
@@ -1078,7 +1078,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                 PyErr_Format(ErrorObj, "Could not invoke 'mqAddStringFilter' compCode=[%d], " \
                             "compReason=[%d], filter_selector=[%d], filter_value=[%s], " \
                             "filter_operator=[%d]", (int)compCode, (int)compReason, (int)PyLong_AsLong(filter_selector), 
-                                  PyString_AsString(filter_value), 
+                                  PyBytes_AsString(filter_value), 
                                   (int)PyLong_AsLong(filter_operator));
                                   
                 PYMQI_MQAI_FILTERS_CLEANUP
@@ -1139,16 +1139,16 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                   /*
                    * The key ought to be an int or a long. Blow up if it isn't
                    */
-                  if(!PyLong_Check(key) && !PyInt_Check(key)) {
+                  if(!PyLong_Check(key) && !PyLong_Check(key)) {
                       PyObject *keyStr = PyObject_Str(key);  /* Owned ref */
-                      PyErr_Format(ErrorObj, "Argument: %s is not integer", PyString_AsString(keyStr));
+                      PyErr_Format(ErrorObj, "Argument: %s is not integer", PyBytes_AsString(keyStr));
                       Py_XDECREF(keyStr);
                       Py_DECREF(resultsList);
                       cleanupBags(adminBag, responseBag);
                       return NULL;
                   }
                   else {
-                      paramType = PyLong_Check(key) ? PyLong_AsLong(key) : PyInt_AsLong(key);
+                      paramType = PyLong_Check(key) ? PyLong_AsLong(key) : PyLong_AsLong(key);
                   }
 
                   /*
@@ -1157,12 +1157,12 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                    if (PyLong_Check(value)) {
                        intArg = PyLong_AsLong(value);
                        mqAddInteger(adminBag, paramType, intArg, &compCode, &compReason);
-                   } else if (PyInt_Check(value)) {
-                       intArg = PyInt_AsLong(value);
+                   } else if (PyLong_Check(value)) {
+                       intArg = PyLong_AsLong(value);
                        mqAddInteger(adminBag, paramType, intArg, &compCode, &compReason);
                    }
-                   else if (PyString_Check(value)) {
-                       strArg = PyString_AsString(value);
+                   else if (PyBytes_Check(value)) {
+                       strArg = PyBytes_AsString(value);
                        mqAddString(adminBag, paramType, MQBL_NULL_TERMINATED, strArg, &compCode, &compReason);
                   } else {
                       isByteString = PyObject_HasAttrString(value, "pymqi_byte_string");
@@ -1170,7 +1170,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                         /* value is a ByteString.  have to use its "value" attribute */
                         PyObject *byteStringValue;
                         byteStringValue = PyObject_GetAttrString(value, "value"); /* Owned ref */
-                        strByteArg = (MQBYTE *)PyString_AsString(byteStringValue);
+                        strByteArg = (MQBYTE *)PyBytes_AsString(byteStringValue);
 
 #ifdef MQCMDL_LEVEL_700
                         mqAddByteString(adminBag, paramType, (MQLONG)PyObject_Length(value), strByteArg, &compCode, &compReason);
@@ -1182,7 +1182,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                         PyObject *keyStr = PyObject_Str(key);    /* Owned ref */
                         PyObject *valStr = PyObject_Str(value);  /* Owned ref */
                         PyErr_Format(ErrorObj, "Value %s for key %s is not a long, string nor a pymqi.ByteString instance",
-                                     PyString_AsString(valStr), PyString_AsString(keyStr));
+                                     PyBytes_AsString(valStr), PyBytes_AsString(keyStr));
                         Py_XDECREF(keyStr);
                         Py_XDECREF(valStr);
                         Py_DECREF(resultsList);
@@ -1371,7 +1371,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
 
                                         itemStrVal[strLength] = 0;
 
-                                        pyItemStrVal = PyString_FromString(itemStrVal);
+                                        pyItemStrVal = PyUnicode_FromString(itemStrVal);
 
                                         if (PyDict_Contains(resultsDict, key) > 0) {
                                               resultDictValue = PyDict_GetItem(resultsDict, key);
@@ -1434,7 +1434,7 @@ static PyObject *pymqe_mqaiExecute(PyObject *self, PyObject *args) {
                                         }
 
                                         /*byte strings may contain nulls */
-                                        pyItemStrVal = PyString_FromStringAndSize((char *)itemByteStrVal, byteStrLength);
+                                        pyItemStrVal = PyUnicode_FromStringAndSize((char *)itemByteStrVal, byteStrLength);
                                         PyDict_SetItem(resultsDict, key, pyItemStrVal);
 
                                         free(itemByteStrVal);
@@ -1518,21 +1518,32 @@ static char pymqe_module_documentation[] =
 #ifdef WIN32
 __declspec(dllexport)
 #endif
-     void initpymqe(void) {
+
+/* 
+ * Module definition
+ */
+static struct PyModuleDef pymqe_module = {
+    PyModuleDef_HEAD_INIT,
+    "pymqe",
+    pymqe_module_documentation,
+    -1,
+    pymqe_methods
+};
+
+/* Module initialization method */
+PyMODINIT_FUNC PyInit_pymqe(void) {
   PyObject *m, *d;
 
   /* Create the module and add the functions */
-  m = Py_InitModule4("pymqe", pymqe_methods,
-             pymqe_module_documentation,
-             (PyObject*)NULL,PYTHON_API_VERSION);
+  m = PyModule_Create(&pymqe_module);
 
   /* Add some symbolic constants to the module */
   d = PyModule_GetDict(m);
   ErrorObj = PyErr_NewException("pymqe.error", NULL, NULL);
   PyDict_SetItemString(d, "pymqe.error", ErrorObj);
 
-  PyDict_SetItemString(d, "__doc__", PyString_FromString(pymqe_doc));
-  PyDict_SetItemString(d,"__version__", PyString_FromString(__version__));
+  PyDict_SetItemString(d, "__doc__", PyUnicode_FromString(pymqe_doc));
+  PyDict_SetItemString(d,"__version__", PyUnicode_FromString(__version__));
 
   /*
    * Build the tuple of supported command levels, but only for versions
@@ -1541,34 +1552,34 @@ __declspec(dllexport)
   {
     PyObject *versions = PyList_New(0);
 #ifdef MQCMDL_LEVEL_500
-      PyList_Append(versions, PyString_FromString("5.0"));
+      PyList_Append(versions, PyUnicode_FromString("5.0"));
 #endif
 #ifdef MQCMDL_LEVEL_510
-      PyList_Append(versions, PyString_FromString("5.1"));
+      PyList_Append(versions, PyUnicode_FromString("5.1"));
 #endif
 #ifdef MQCMDL_LEVEL_520
-      PyList_Append(versions, PyString_FromString("5.2"));
+      PyList_Append(versions, PyUnicode_FromString("5.2"));
 #endif
 #ifdef MQCMDL_LEVEL_530
-      PyList_Append(versions, PyString_FromString("5.3"));
+      PyList_Append(versions, PyUnicode_FromString("5.3"));
 #endif
 #ifdef MQCMDL_LEVEL_600
-      PyList_Append(versions, PyString_FromString("6.0"));
+      PyList_Append(versions, PyUnicode_FromString("6.0"));
 #endif
 #ifdef MQCMDL_LEVEL_700
-      PyList_Append(versions, PyString_FromString("7.0"));
+      PyList_Append(versions, PyUnicode_FromString("7.0"));
 #endif
 #ifdef MQCMDL_LEVEL_710
-      PyList_Append(versions, PyString_FromString("7.1"));
+      PyList_Append(versions, PyUnicode_FromString("7.1"));
 #endif
 #ifdef MQCMDL_LEVEL_750
-      PyList_Append(versions, PyString_FromString("7.5"));
+      PyList_Append(versions, PyUnicode_FromString("7.5"));
 #endif
 #ifdef MQCMDL_LEVEL_710
-      PyList_Append(versions, PyString_FromString("7.1"));
+      PyList_Append(versions, PyUnicode_FromString("7.1"));
 #endif
 #ifdef MQCMDL_LEVEL_750
-      PyList_Append(versions, PyString_FromString("7.5"));
+      PyList_Append(versions, PyUnicode_FromString("7.5"));
 #endif
       PyDict_SetItemString(d,"__mqlevels__", PyList_AsTuple(versions));
       Py_XDECREF(versions);
@@ -1578,12 +1589,14 @@ __declspec(dllexport)
    * Set the client/server build flag
    */
 #if PYQMI_SERVERBUILD == 1
-  PyDict_SetItemString(d,"__mqbuild__", PyString_FromString("server"));
+  PyDict_SetItemString(d,"__mqbuild__", PyUnicode_FromString("server"));
 #else
-  PyDict_SetItemString(d,"__mqbuild__", PyString_FromString("client"));
+  PyDict_SetItemString(d,"__mqbuild__", PyUnicode_FromString("client"));
 #endif
 
   /* Check for errors */
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module pymqe");
+
+  return m;
 }

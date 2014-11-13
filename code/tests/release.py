@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, print_function
+
 
 # Run this module on each supported MQ version prior to releasing PyMQI.
 

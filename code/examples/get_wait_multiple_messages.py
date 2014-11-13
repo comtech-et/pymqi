@@ -37,7 +37,7 @@ while keep_running:
         md.CorrelId = CMQC.MQCI_NONE
         md.GroupId = CMQC.MQGI_NONE
 
-    except pymqi.MQMIError, e:
+    except pymqi.MQMIError as e:
         if e.comp == CMQC.MQCC_FAILED and e.reason == CMQC.MQRC_NO_MSG_AVAILABLE:
             # No messages, that's OK, we can ignore it.
             pass

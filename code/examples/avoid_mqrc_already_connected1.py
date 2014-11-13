@@ -16,7 +16,7 @@ qmgr.connect_tcp_client(queue_manager, pymqi.CD(), channel, conn_info)
 
 try:
     qmgr.connect_tcp_client(queue_manager, pymqi.CD(), channel, conn_info)
-except pymqi.MQMIError, e:
+except pymqi.MQMIError as e:
     if e.comp == CMQC.MQCC_WARNING and e.reason == CMQC.MQRC_ALREADY_CONNECTED:
         # Move along, nothing to see here..
         pass

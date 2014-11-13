@@ -23,7 +23,7 @@ pcf = pymqi.PCFExecute(qmgr)
 
 try:
     response = pcf.MQCMD_INQUIRE_CHANNEL(args)
-except pymqi.MQMIError, e:
+except pymqi.MQMIError as e:
     if e.comp == CMQC.MQCC_FAILED and e.reason == CMQC.MQRC_UNKNOWN_OBJECT_NAME:
         logging.info("No channels matched prefix [%s]" % prefix)
     else:

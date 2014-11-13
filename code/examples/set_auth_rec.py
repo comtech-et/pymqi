@@ -17,8 +17,8 @@ conn_info = '%s(%s)' % (host, port)
 qmgr = pymqi.connect(queue_manager, channel, conn_info)
 pcf = pymqi.PCFExecute(qmgr)
 
-groupEntity ={128L: ['swww02']}
-authEntity = {128L: [CMQCFC.MQAUTH_BROWSE]}
+groupEntity ={128: ['swww02']}
+authEntity = {128: [CMQCFC.MQAUTH_BROWSE]}
 
 args = {CMQCFC.MQCACF_AUTH_PROFILE_NAME: 'Q1',
         CMQCFC.MQIACF_OBJECT_TYPE: CMQC.MQOT_Q,

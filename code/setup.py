@@ -120,9 +120,9 @@ else:
 
 
 if build_server:
-    print "Building PyMQI server %sbits" % bits
+    print("Building PyMQI server %sbits" % bits)
 else:
-    print "Building PyMQI client %sbits" % bits
+    print("Building PyMQI client %sbits" % bits)
 
 
 setup(name = "pymqi",

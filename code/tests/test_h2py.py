@@ -44,7 +44,7 @@ class Testh2py(unittest.TestCase):
                 else:
                     mq_attrs_count[mq_attr] += 1
 
-            for mq_attr, count in mq_attrs_count.items():
+            for mq_attr, count in list(mq_attrs_count.items()):
                 if count == 1 or(count == 2 and mq_attr in ignore_dups):
                     continue
                 else:
